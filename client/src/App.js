@@ -9,7 +9,6 @@ import JobDetails from './pages/JobDetails';
 import Questions from './pages/Questions';
 import Reviews from './pages/Reviews';
 import JobHolderDashboard from './pages/JobHolderDashboard';
-import AdminDashboard from './pages/AdminDashboard';
 import { AuthProvider } from './context/AuthContext';
 import PrivateRoute from './components/PrivateRoute';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -17,12 +16,72 @@ import ErrorBoundary from './components/ErrorBoundary';
 const theme = createTheme({
   palette: {
     primary: {
-      main: '#1976d2',
+      main: '#4A90E2',
+      light: '#5C9CE5',
+      dark: '#357ABD'
     },
     secondary: {
-      main: '#dc004e',
+      main: '#67B26F',
+      light: '#4ca2cd',
+      dark: '#3f8f3f'
     },
+    background: {
+      default: '#f5f7fa',
+      paper: '#ffffff'
+    },
+    text: {
+      primary: '#2C3E50',
+      secondary: '#7F8C8D'
+    }
   },
+  typography: {
+    fontFamily: '"Poppins", "Roboto", "Helvetica", "Arial", sans-serif',
+    h4: {
+      fontWeight: 600,
+      color: '#2C3E50'
+    },
+    h6: {
+      fontWeight: 500
+    }
+  },
+  components: {
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          borderRadius: 8,
+          textTransform: 'none',
+          fontWeight: 500,
+          padding: '8px 16px'
+        },
+        contained: {
+          boxShadow: 'none',
+          '&:hover': {
+            boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+          }
+        }
+      }
+    },
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          backgroundImage: 'none'
+        }
+      }
+    },
+    MuiCard: {
+      styleOverrides: {
+        root: {
+          backgroundColor: 'rgba(255, 255, 255, 0.9)',
+          backdropFilter: 'blur(10px)',
+          transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+          '&:hover': {
+            transform: 'translateY(-4px)',
+            boxShadow: '0 12px 48px rgba(0, 0, 0, 0.12)'
+          }
+        }
+      }
+    }
+  }
 });
 
 function App() {
@@ -40,7 +99,6 @@ function App() {
               <Route path="/job/:id/questions" element={<PrivateRoute><Questions /></PrivateRoute>} />
               <Route path="/job/:id/reviews" element={<PrivateRoute><Reviews /></PrivateRoute>} />
               <Route path="/jobholder/dashboard" element={<PrivateRoute><JobHolderDashboard /></PrivateRoute>} />
-              <Route path="/admin/dashboard" element={<PrivateRoute><AdminDashboard /></PrivateRoute>} />
             </Routes>
           </BrowserRouter>
         </AuthProvider>

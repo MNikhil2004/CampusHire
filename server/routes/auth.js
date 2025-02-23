@@ -32,6 +32,11 @@ router.post('/register', async (req, res) => {
       });
     }
 
+    // In the register route, temporarily allow admin role
+    if (!['user', 'jobholder'].includes(role)) {
+      return res.status(400).json({ message: 'Invalid role' });
+    }
+
     // Create new user
     user = new User({
       username,

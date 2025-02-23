@@ -2,6 +2,24 @@ import React from 'react';
 import { AppBar, Toolbar, Typography, Button, Box, Chip } from '@mui/material';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { styled } from '@mui/material/styles';
+
+const StyledAppBar = styled(AppBar)(({ theme }) => ({
+  background: 'linear-gradient(135deg, #4A90E2 0%, #67B26F 100%)',
+  boxShadow: 'none',
+  '& .MuiToolbar-root': {
+    padding: theme.spacing(1, 3)
+  }
+}));
+
+const NavButton = styled(Button)(({ theme }) => ({
+  color: 'white',
+  borderRadius: 20,
+  padding: theme.spacing(1, 2),
+  '&:hover': {
+    backgroundColor: 'rgba(255,255,255,0.1)'
+  }
+}));
 
 const Navbar = () => {
   const { user, logout } = useAuth();
@@ -13,7 +31,7 @@ const Navbar = () => {
   };
 
   return (
-    <AppBar position="static">
+    <StyledAppBar position="static">
       <Toolbar>
         <Typography variant="h6" component={Link} to="/" sx={{ 
           flexGrow: 1, 
@@ -27,14 +45,8 @@ const Navbar = () => {
           // Logged in navigation
           <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
             {user.role === 'user' ? (
-              // Student Navigation
-              <Button 
-                color="inherit" 
-                component={Link} 
-                to="/"
-              >
-                Latest Jobs
-              </Button>
+              // Remove this section for student navigation
+              null
             ) : user.role === 'jobholder' ? (
               // Job Holder Navigation
               <Button 
@@ -86,7 +98,7 @@ const Navbar = () => {
           </Box>
         )}
       </Toolbar>
-    </AppBar>
+    </StyledAppBar>
   );
 };
 

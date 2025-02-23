@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { 
   Container, 
   Paper, 
@@ -10,6 +10,43 @@ import {
 } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
+import { styled } from '@mui/material/styles';
+
+const LoginContainer = styled(Box)(({ theme }) => ({
+  minHeight: '90vh',
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  justifyContent: 'center',
+  background: 'linear-gradient(135deg, #f5f7fa 0%, #e4e9f2 100%)',
+  position: 'relative',
+  '&::before': {
+    content: '""',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: 'url("/images/login-bg.jpg")',
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    opacity: 0.1,
+    pointerEvents: 'none'
+  }
+}));
+
+const LoginCard = styled(Paper)(({ theme }) => ({
+  padding: theme.spacing(4),
+  borderRadius: theme.spacing(2),
+  maxWidth: 400,
+  width: '100%',
+  backgroundColor: 'rgba(255, 255, 255, 0.9)',
+  backdropFilter: 'blur(10px)',
+  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
+  '& .MuiTextField-root': {
+    marginBottom: theme.spacing(2)
+  }
+}));
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -39,11 +76,27 @@ const Login = () => {
   };
 
   return (
-    <Container component="main" maxWidth="xs">
-      <Paper elevation={6} sx={{ mt: 8, p: 4 }}>
-        <Typography component="h1" variant="h5" align="center">
-          Login
+    <LoginContainer>
+      <Box sx={{ 
+        textAlign: 'center', 
+        mb: 4, 
+        maxWidth: 600,
+        px: 2,
+        position: 'relative',
+        zIndex: 1
+      }}>
+        <Typography variant="h4" gutterBottom sx={{ color: 'primary.main', fontWeight: 600 }}>
+          Unlock Your Career Opportunities
         </Typography>
+        <Typography variant="h6" sx={{ color: 'text.secondary', mb: 2 }}>
+          Connect with your college alumni network and access exclusive job opportunities
+        </Typography>
+        <Typography variant="body1" sx={{ color: 'text.secondary' }}>
+          Get insights about interview experiences, salary trends, and career growth paths from your seniors
+        </Typography>
+      </Box>
+
+      <LoginCard elevation={0}>
         <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
           <TextField
             margin="normal"
@@ -82,9 +135,23 @@ const Login = () => {
           >
             Sign In
           </Button>
+
+          <Box sx={{ mt: 3, textAlign: 'center' }}>
+            <Typography variant="body2" color="text.secondary">
+              Don't have an account yet?
+            </Typography>
+            <Button
+              component={Link}
+              to="/register"
+              color="primary"
+              sx={{ mt: 1 }}
+            >
+              Register Now to Join Your College Network
+            </Button>
+          </Box>
         </Box>
-      </Paper>
-    </Container>
+      </LoginCard>
+    </LoginContainer>
   );
 };
 

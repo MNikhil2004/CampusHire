@@ -1,5 +1,6 @@
+//Home page for both jobholder and student
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import {
   Container,
   Grid,
@@ -14,16 +15,65 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  InputAdornment,
-  Paper
+  Paper,
+  IconButton
 } from '@mui/material';
-import SearchIcon from '@mui/icons-material/Search';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/axios';
+import { styled } from '@mui/material/styles';
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import { PageContainer, ContentPaper } from '../styles/backgroundStyles';
+
+const JobCard = styled(Card)(({ theme }) => ({
+  height: '100%',
+  display: 'flex',
+  flexDirection: 'column',
+  transition: 'all 0.3s ease',
+  borderRadius: 16,
+  overflow: 'hidden',
+  '&:hover': {
+    transform: 'translateY(-4px)',
+    boxShadow: '0 12px 24px rgba(0,0,0,0.1)'
+  }
+}));
+
+const JobCardContent = styled(CardContent)(({ theme }) => ({
+  flexGrow: 1,
+  padding: theme.spacing(3),
+  '& .MuiTypography-h6': {
+    color: theme.palette.primary.main,
+    fontWeight: 600
+  },
+  '& .MuiTypography-subtitle1': {
+    color: theme.palette.secondary.main,
+    fontWeight: 500
+  }
+}));
+
+const ActionButton = styled(Button)(({ theme }) => ({
+  marginTop: theme.spacing(1),
+  width: '100%',
+  borderRadius: 8,
+  '&:hover': {
+    transform: 'translateY(-2px)',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+  }
+}));
+
+const InsightsCard = styled(Card)(({ theme }) => ({
+  height: '100%',
+  backgroundColor: 'rgba(255, 255, 255, 0.9)',
+  backdropFilter: 'blur(10px)',
+  transition: 'all 0.3s ease',
+  '&:hover': {
+    transform: 'translateY(-4px)',
+    boxShadow: '0 12px 24px rgba(0, 0, 0, 0.12)'
+  }
+}));
 
 const Home = () => {
   const [jobs, setJobs] = useState([]);
-  const [filteredJobs, setFilteredJobs] = useState([]);
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -35,100 +85,87 @@ const Home = () => {
     sortBy: 'latest'
   });
 
-  // Handle input changes
-  const handleSearchChange = (e) => {
-    const { name, value } = e.target;
-    setSearchParams(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
   useEffect(() => {
     const fetchJobs = async () => {
       try {
-        const response = await api.get(`/api/jobs/college/${user.college}`);
-        setJobs(response.data);
-        setFilteredJobs(response.data);
+        if (user?.role === 'jobholder') {
+          const response = await api.get('/api/jobs/myjobs');
+          setJobs(response.data);
+        } else if (user?.college && user?.role === 'user') {
+          const response = await api.get(`/api/jobs/college/${user.college}`);
+          setJobs(response.data);
+        }
       } catch (error) {
         console.error('Error fetching jobs:', error);
       }
     };
 
-    if (user?.college && user.role === 'user') {
+    if (user) {
       fetchJobs();
     }
-  }, [user?.college, user?.role]);
+  }, [user]);
 
-  // Filter and sort jobs based on search parameters
-  useEffect(() => {
-    let result = [...jobs];
-
-    // Keyword filter (company name or role)
-    if (searchParams.keyword) {
-      const keyword = searchParams.keyword.toLowerCase();
-      result = result.filter(job => 
-        job.companyName.toLowerCase().includes(keyword) ||
-        job.role.toLowerCase().includes(keyword)
-      );
+  const handleDeleteJob = async (jobId) => {
+    if (window.confirm('Are you sure you want to delete this job?')) {
+      try {
+        await api.delete(`/api/jobs/${jobId}`);
+        
+        // Refresh jobs list
+        const response = await api.get('/api/jobs/myjobs');
+        setJobs(response.data);
+        
+        alert('Job deleted successfully!');
+      } catch (error) {
+        console.error('Error deleting job:', error);
+        alert('Error deleting job');
+      }
     }
-
-    // Salary filter
-    if (searchParams.minSalary) {
-      result = result.filter(job => 
-        parseFloat(job.salary) >= parseFloat(searchParams.minSalary)
-      );
-    }
-
-    // Year filter
-    if (searchParams.year) {
-      result = result.filter(job => 
-        job.yearOfJoining === parseInt(searchParams.year)
-      );
-    }
-
-    // Sorting
-    switch (searchParams.sortBy) {
-      case 'salary-high':
-        result.sort((a, b) => parseFloat(b.salary) - parseFloat(a.salary));
-        break;
-      case 'salary-low':
-        result.sort((a, b) => parseFloat(a.salary) - parseFloat(b.salary));
-        break;
-      case 'year-new':
-        result.sort((a, b) => b.yearOfJoining - a.yearOfJoining);
-        break;
-      case 'year-old':
-        result.sort((a, b) => a.yearOfJoining - b.yearOfJoining);
-        break;
-      case 'latest':
-      default:
-        result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    }
-
-    setFilteredJobs(result);
-  }, [searchParams, jobs]);
+  };
 
   const JobHolderHome = () => (
     <Box sx={{ py: 4 }}>
-      <Paper elevation={3} sx={{ p: 4, mb: 4, textAlign: 'center' }}>
-        <Typography variant="h4" gutterBottom>
-          Help Your Juniors Succeed
+      <Paper elevation={3} sx={{ p: 4, mb: 4 }}>
+        <Typography variant="h5" gutterBottom color="primary.main">
+          Make a Difference in Your College Community
         </Typography>
         <Typography variant="body1" paragraph>
-          Share your valuable experience and help guide the next generation of professionals.
+          As an alumnus, you can help current students by:
         </Typography>
-        <Button
-          variant="contained"
-          size="large"
-          onClick={() => navigate('/jobholder/dashboard')}
-          sx={{ mt: 2 }}
-        >
-          Open Dashboard
-        </Button>
+        <Grid container spacing={2}>
+          <Grid item xs={12} md={4}>
+            <Box sx={{ p: 2, textAlign: 'center' }}>
+              <Typography variant="h6" gutterBottom>
+                Share Opportunities
+              </Typography>
+              <Typography>
+                Post job openings from your company
+              </Typography>
+            </Box>
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <Box sx={{ p: 2, textAlign: 'center' }}>
+              <Typography variant="h6" gutterBottom>
+                Guide Others
+              </Typography>
+              <Typography>
+                Share interview questions and experiences
+              </Typography>
+            </Box>
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <Box sx={{ p: 2, textAlign: 'center' }}>
+              <Typography variant="h6" gutterBottom>
+                Build Network
+              </Typography>
+              <Typography>
+                Connect with and mentor juniors
+              </Typography>
+            </Box>
+          </Grid>
+        </Grid>
       </Paper>
 
-      <Grid container spacing={4}>
+      <Grid container spacing={4} sx={{ mb: 4 }}>
         <Grid item xs={12} md={6}>
           <Card>
             <CardContent>
@@ -140,7 +177,7 @@ const Home = () => {
               </Typography>
               <Button
                 variant="outlined"
-                onClick={() => navigate('/jobholder/dashboard')}
+                onClick={() => navigate('/jobholder/dashboard?tab=1')}
               >
                 Start Contributing
               </Button>
@@ -158,7 +195,7 @@ const Home = () => {
               </Typography>
               <Button
                 variant="outlined"
-                onClick={() => navigate('/jobholder/dashboard')}
+                onClick={() => navigate('/jobholder/dashboard?tab=0')}
               >
                 Post a Job
               </Button>
@@ -166,141 +203,216 @@ const Home = () => {
           </Card>
         </Grid>
       </Grid>
+
+      <Paper elevation={3} sx={{ p: 4 }}>
+        <Typography variant="h5" gutterBottom color="primary.main">
+          Your Shared Jobs
+        </Typography>
+        <Grid container spacing={3}>
+          {jobs.length === 0 ? (
+            <Grid item xs={12}>
+              <Typography variant="body1" color="text.secondary" align="center">
+                You haven't shared any job opportunities yet.
+              </Typography>
+            </Grid>
+          ) : (
+            jobs.map((job) => (
+              <Grid item xs={12} sm={6} md={4} key={job._id}>
+                <InsightsCard>
+                  <CardContent>
+                    <Box sx={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      mb: 2,
+                      height: 60 
+                    }}>
+                      {job.companyImage && (
+                        <Box
+                          component="img"
+                          src={`${process.env.REACT_APP_API_URL}/${job.companyImage}`}
+                          alt={job.companyName}
+                          sx={{
+                            height: 50,
+                            width: 50,
+                            objectFit: 'contain',
+                            mr: 2
+                          }}
+                        />
+                      )}
+                      <Typography variant="h6" noWrap>
+                        {job.companyName}
+                      </Typography>
+                    </Box>
+                    <Typography variant="subtitle1" color="primary" gutterBottom>
+                      {job.role}
+                    </Typography>
+                    <Box sx={{ mb: 2 }}>
+                      <Typography variant="body2" color="text.secondary">
+                        ₹{job.salary} LPA
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Year: {job.yearOfJoining}
+                      </Typography>
+                    </Box>
+                    <Typography 
+                      variant="body2" 
+                      color="text.secondary" 
+                      sx={{ 
+                        mb: 2,
+                        display: '-webkit-box',
+                        WebkitLineClamp: 3,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                        height: 60
+                      }}
+                    >
+                      {job.description}
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 1, mt: 'auto' }}>
+                      <Button
+                        variant="outlined"
+                        color="primary"
+                        fullWidth
+                        onClick={() => navigate(`/jobholder/dashboard?tab=0&edit=${job._id}`)}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        color="error"
+                        fullWidth
+                        onClick={() => handleDeleteJob(job._id)}
+                      >
+                        Delete
+                      </Button>
+                    </Box>
+                  </CardContent>
+                </InsightsCard>
+              </Grid>
+            ))
+          )}
+        </Grid>
+      </Paper>
     </Box>
   );
 
   const StudentHome = () => (
     <Box sx={{ py: 4 }}>
-      {/* Search and Filter Section */}
-      <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
-        <Grid container spacing={3}>
+      <Paper elevation={3} sx={{ p: 4, mb: 4 }}>
+        <Typography variant="h5" gutterBottom color="primary.main">
+          Welcome to Your Job Search Journey
+        </Typography>
+        <Typography variant="body1" paragraph>
+          Here you can:
+        </Typography>
+        <Grid container spacing={2}>
           <Grid item xs={12} md={4}>
-            <TextField
-              fullWidth
-              label="Search Jobs"
-              name="keyword"
-              value={searchParams.keyword}
-              onChange={handleSearchChange}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon />
-                  </InputAdornment>
-                ),
-              }}
-              placeholder="Search by company or role"
-            />
+            <Box sx={{ p: 2, textAlign: 'center' }}>
+              <Typography variant="h6" gutterBottom>
+                Find Jobs
+              </Typography>
+              <Typography>
+                Browse opportunities posted by alumni from your college
+              </Typography>
+            </Box>
           </Grid>
           <Grid item xs={12} md={4}>
-            <TextField
-              fullWidth
-              label="Minimum Salary"
-              name="minSalary"
-              type="number"
-              value={searchParams.minSalary}
-              onChange={handleSearchChange}
-              InputProps={{
-                startAdornment: <InputAdornment position="start">₹</InputAdornment>,
-              }}
-            />
+            <Box sx={{ p: 2, textAlign: 'center' }}>
+              <Typography variant="h6" gutterBottom>
+                Prepare Better
+              </Typography>
+              <Typography>
+                Access real interview questions and experiences
+              </Typography>
+            </Box>
           </Grid>
-          <Grid item xs={12} md={3}>
-            <TextField
-              fullWidth
-              label="Filter by Year"
-              name="year"
-              type="number"
-              value={searchParams.year}
-              onChange={handleSearchChange}
-              inputProps={{ 
-                min: "2000",
-                max: new Date().getFullYear(),
-                placeholder: "YYYY"
-              }}
-            />
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <FormControl fullWidth>
-              <InputLabel>Sort By</InputLabel>
-              <Select
-                name="sortBy"
-                value={searchParams.sortBy}
-                label="Sort By"
-                onChange={handleSearchChange}
-              >
-                <MenuItem value="latest">Latest First</MenuItem>
-                <MenuItem value="salary-high">Highest Salary</MenuItem>
-                <MenuItem value="salary-low">Lowest Salary</MenuItem>
-                <MenuItem value="year-new">Recent Joinings</MenuItem>
-                <MenuItem value="year-old">Older Joinings</MenuItem>
-              </Select>
-            </FormControl>
+          <Grid item xs={12} md={4}>
+            <Box sx={{ p: 2, textAlign: 'center' }}>
+              <Typography variant="h6" gutterBottom>
+                Get Insights
+              </Typography>
+              <Typography>
+                Learn from detailed interview reviews and tips
+              </Typography>
+            </Box>
           </Grid>
         </Grid>
       </Paper>
 
-      {/* Results Section */}
       <Typography variant="h4" gutterBottom>
         Latest Jobs in {user?.college}
       </Typography>
       
-      {filteredJobs.length === 0 ? (
+      {jobs.length === 0 ? (
         <Typography variant="h6" color="text.secondary" sx={{ textAlign: 'center', mt: 4 }}>
-          No jobs found matching your criteria
+          No jobs found.
         </Typography>
       ) : (
         <Grid container spacing={4}>
-          {filteredJobs.map((job) => (
+          {jobs.map((job) => (
             <Grid item xs={12} md={6} lg={4} key={job._id}>
-              <Card>
-                <Box sx={{ display: 'flex', alignItems: 'center', p: 2 }}>
+              <JobCard>
+                <JobCardContent>
                   {job.companyImage && (
-                    <CardMedia
+                    <Box 
                       component="img"
-                      sx={{ width: 50, height: 50, objectFit: 'contain', mr: 2 }}
-                      image={`${process.env.REACT_APP_API_URL}/${job.companyImage}`}
+                      src={`${process.env.REACT_APP_API_URL}/${job.companyImage}`}
                       alt={job.companyName}
+                      sx={{ 
+                        height: 60,
+                        objectFit: 'contain',
+                        mb: 2,
+                        filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))'
+                      }}
                     />
                   )}
-                  <Typography variant="h6">
+                  <Typography variant="h6" gutterBottom>
                     {job.companyName}
                   </Typography>
-                </Box>
-                <CardContent>
                   <Typography variant="subtitle1" gutterBottom>
-                    Role: {job.role}
+                    {job.role}
                   </Typography>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
-                    Salary: ₹{job.salary}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
-                    Year of Joining: {job.yearOfJoining}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
-                    Contact: {job.postedBy?.email}
-                  </Typography>
-                  <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
-                    <Button
+                  <Box sx={{ 
+                    display: 'flex', 
+                    gap: 2, 
+                    mb: 2,
+                    color: 'text.secondary',
+                    fontSize: '0.875rem'
+                  }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <Typography variant="body2" color="text.secondary">
+                        ₹{job.salary}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <CalendarTodayIcon fontSize="small" />
+                      {job.yearOfJoining}
+                    </Box>
+                  </Box>
+                  <Box sx={{ mt: 'auto', display: 'flex', flexDirection: 'column', gap: 1 }}>
+                    <ActionButton
                       variant="outlined"
+                      color="primary"
                       onClick={() => navigate(`/job/${job._id}/questions`)}
                     >
-                      Check Questions
-                    </Button>
-                    <Button
-                      variant="outlined"
+                      View Questions
+                    </ActionButton>
+                    <ActionButton
+                      variant="contained"
                       onClick={() => navigate(`/job/${job._id}`)}
                     >
-                      Check Description
-                    </Button>
-                    <Button
+                      View Details
+                    </ActionButton>
+                    <ActionButton
                       variant="outlined"
+                      color="secondary"
                       onClick={() => navigate(`/job/${job._id}/reviews`)}
                     >
-                      Check Reviews
-                    </Button>
+                      Read Reviews
+                    </ActionButton>
                   </Box>
-                </CardContent>
-              </Card>
+                </JobCardContent>
+              </JobCard>
             </Grid>
           ))}
         </Grid>
@@ -308,10 +420,180 @@ const Home = () => {
     </Box>
   );
 
+  const PublicHome = () => (
+    <Box sx={{ py: 8 }}>
+      <Container>
+        <Typography variant="h3" gutterBottom sx={{ fontWeight: 600, color: 'primary.main' }}>
+          Welcome to CareerBridge
+        </Typography>
+        <Typography variant="h5" sx={{ mb: 4, color: 'text.secondary' }}>
+          Connecting College Students with Alumni Job Opportunities
+        </Typography>
+
+        <Grid container spacing={4} sx={{ mb: 6 }}>
+          <Grid item xs={12} md={4}>
+            <Paper sx={{ p: 3, height: '100%', textAlign: 'center' }}>
+              <Typography variant="h6" color="primary.main" gutterBottom>
+                Real Interview Insights
+              </Typography>
+              <Typography variant="body1">
+                Access actual interview questions and experiences shared by alumni who got placed.
+              </Typography>
+            </Paper>
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <Paper sx={{ p: 3, height: '100%', textAlign: 'center' }}>
+              <Typography variant="h6" color="primary.main" gutterBottom>
+                College-Specific Jobs
+              </Typography>
+              <Typography variant="body1">
+                Find job opportunities posted by alumni from your own college.
+              </Typography>
+            </Paper>
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <Paper sx={{ p: 3, height: '100%', textAlign: 'center' }}>
+              <Typography variant="h6" color="primary.main" gutterBottom>
+                Direct Alumni Connect
+              </Typography>
+              <Typography variant="body1">
+                Learn from and connect with successful alumni from your college.
+              </Typography>
+            </Paper>
+          </Grid>
+        </Grid>
+        
+        <Grid container spacing={4}>
+          <Grid item xs={12} md={6}>
+            <Paper sx={{ p: 4, height: '100%' }}>
+              <Typography variant="h5" gutterBottom color="primary.main">
+                For Students
+              </Typography>
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="body1" paragraph>
+                  • Access job opportunities from your college alumni
+                </Typography>
+                <Typography variant="body1" paragraph>
+                  • Get real interview questions and experiences
+                </Typography>
+                <Typography variant="body1" paragraph>
+                  • Learn from alumni success stories
+                </Typography>
+                <Typography variant="body1" paragraph>
+                  • Prepare with company-specific interview guides
+                </Typography>
+                <Typography variant="body1" paragraph>
+                  • Track your application progress
+                </Typography>
+              </Box>
+              <Button 
+                variant="contained" 
+                component={Link} 
+                to="/login"
+                size="large"
+                fullWidth
+              >
+                Login to Access Jobs
+              </Button>
+              <Typography 
+                variant="body2" 
+                color="text.secondary" 
+                sx={{ mt: 2, textAlign: 'center' }}
+              >
+                Join your college network to access all features
+              </Typography>
+            </Paper>
+          </Grid>
+          
+          <Grid item xs={12} md={6}>
+            <Paper sx={{ p: 4, height: '100%' }}>
+              <Typography variant="h5" gutterBottom color="primary.main">
+                For Job Holders
+              </Typography>
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="body1" paragraph>
+                  • Share job opportunities from your company
+                </Typography>
+                <Typography variant="body1" paragraph>
+                  • Help juniors with interview preparation
+                </Typography>
+                <Typography variant="body1" paragraph>
+                  • Give back to your college community
+                </Typography>
+                <Typography variant="body1" paragraph>
+                  • Build your professional network
+                </Typography>
+                <Typography variant="body1" paragraph>
+                  • Track the impact of your contributions
+                </Typography>
+              </Box>
+              <Button 
+                variant="contained" 
+                component={Link} 
+                to="/register"
+                size="large"
+                fullWidth
+              >
+                Register as Job Holder
+              </Button>
+              <Typography 
+                variant="body2" 
+                color="text.secondary" 
+                sx={{ mt: 2, textAlign: 'center' }}
+              >
+                Help shape the future of your juniors
+              </Typography>
+            </Paper>
+          </Grid>
+        </Grid>
+
+        <Paper 
+          sx={{ 
+            mt: 6, 
+            p: 4, 
+            textAlign: 'center',
+            background: 'linear-gradient(135deg, #4A90E2 0%, #67B26F 100%)',
+            color: 'white'
+          }}
+        >
+          <Typography variant="h5" gutterBottom>
+            Ready to Get Started?
+          </Typography>
+          <Typography variant="body1" sx={{ mb: 3 }}>
+            Join CareerBridge to access all features and connect with your college network
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
+            <Button 
+              variant="contained" 
+              component={Link} 
+              to="/login"
+              size="large"
+              sx={{ bgcolor: 'white', color: 'primary.main', '&:hover': { bgcolor: '#f5f5f5' } }}
+            >
+              Login Now
+            </Button>
+            <Button 
+              variant="outlined" 
+              component={Link} 
+              to="/register"
+              size="large"
+              sx={{ color: 'white', borderColor: 'white', '&:hover': { borderColor: 'white', bgcolor: 'rgba(255,255,255,0.1)' } }}
+            >
+              Register
+            </Button>
+          </Box>
+        </Paper>
+      </Container>
+    </Box>
+  );
+
   return (
-    <Container>
-      {user?.role === 'jobholder' ? <JobHolderHome /> : <StudentHome />}
-    </Container>
+    <PageContainer>
+      <Container>
+        {!user ? <PublicHome /> : 
+          user.role === 'jobholder' ? <JobHolderHome /> : <StudentHome />}
+      </Container>
+    </PageContainer>
   );
 };
 

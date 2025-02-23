@@ -2,8 +2,20 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 const Job = require('../models/Job');
-const auth = require('../middleware/auth');
+const { sendCredentialsEmail } = require('../utils/emailService');
 const adminAuth = require('../middleware/adminAuth');
+const multer = require('multer');
+const path = require('path');
+
+// Configure multer for offer letter uploads
+const storage = multer.diskStorage({
+  destination: './uploads/offerLetters',
+  filename: (req, file, cb) => {
+    cb(null, `${Date.now()}-${file.originalname}`);
+  }
+});
+
+const upload = multer({ storage });
 
 // Get all users for admin
 router.get('/users', adminAuth, async (req, res) => {
@@ -15,8 +27,22 @@ router.get('/users', adminAuth, async (req, res) => {
   }
 });
 
-// Verify job holder
-router.post('/verify/:userId', adminAuth, async (req, res) => {
+// Get pending job holder requests
+router.get('/pending-requests', adminAuth, async (req, res) => {
+  try {
+    const requests = await User.find({
+      college: req.user.college,
+      role: 'jobholder',
+      isVerified: false
+    });
+    res.json(requests);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Verify and create job holder account
+router.post('/verify-jobholder/:userId', adminAuth, async (req, res) => {
   try {
     const { username, password } = req.body;
     const user = await User.findById(req.params.userId);
@@ -25,15 +51,38 @@ router.post('/verify/:userId', adminAuth, async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
+    // Update user details
     user.isVerified = true;
-    user.verifiedBy = req.user.userId;
+    user.verifiedBy = req.user._id;
     user.username = username;
-    user.password = password; // Make sure to hash this
-
+    user.password = password;
     await user.save();
-    res.json({ message: 'User verified successfully' });
+
+    // Send credentials via email
+    await sendCredentialsEmail(
+      user.email,
+      username,
+      password,
+      user.jobDetails
+    );
+
+    res.json({ message: 'Job holder verified and credentials sent' });
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Get all verified job holders
+router.get('/verified-jobholders', adminAuth, async (req, res) => {
+  try {
+    const jobHolders = await User.find({
+      college: req.user.college,
+      role: 'jobholder',
+      isVerified: true
+    });
+    res.json(jobHolders);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 });
 
@@ -55,21 +104,18 @@ router.delete('/jobs/:jobId', adminAuth, async (req, res) => {
   }
 });
 
-// Remove verification from job holder
+// Remove job holder verification
 router.post('/remove-verification/:userId', adminAuth, async (req, res) => {
   try {
-    const user = await User.findOne({ 
-      _id: req.params.userId,
-      college: req.user.college
-    });
+    const user = await User.findOneAndUpdate(
+      { _id: req.params.userId, college: req.user.college },
+      { isVerified: false, verifiedBy: null },
+      { new: true }
+    );
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-
-    user.isVerified = false;
-    user.verifiedBy = undefined;
-    await user.save();
 
     res.json({ message: 'Verification removed successfully' });
   } catch (error) {

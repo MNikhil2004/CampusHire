@@ -16,76 +16,60 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  TextField
+  TextField,
+  IconButton,
+  Tooltip
 } from '@mui/material';
+import {
+  Visibility as VisibilityIcon,
+  Delete as DeleteIcon,
+  Check as CheckIcon
+} from '@mui/icons-material';
 import api from '../utils/axios';
 
 const AdminDashboard = () => {
-  const [value, setValue] = useState(0);
-  const [pendingJobHolders, setPendingJobHolders] = useState([]);
-  const [verifiedJobHolders, setVerifiedJobHolders] = useState([]);
-  const [jobs, setJobs] = useState([]);
+  const [tabValue, setTabValue] = useState(0);
+  const [pendingRequests, setPendingRequests] = useState([]);
+  const [verifiedUsers, setVerifiedUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [credentialsDialog, setCredentialsDialog] = useState(false);
   const [credentials, setCredentials] = useState({
     username: '',
     password: ''
   });
 
   useEffect(() => {
-    fetchUsers();
-    fetchJobs();
+    fetchData();
   }, []);
 
-  const fetchUsers = async () => {
+  const fetchData = async () => {
     try {
-      const response = await api.get('/api/admin/users');
-      setPendingJobHolders(response.data.filter(user => 
-        user.role === 'jobholder' && !user.isVerified
-      ));
-      setVerifiedJobHolders(response.data.filter(user => 
-        user.role === 'jobholder' && user.isVerified
-      ));
+      const [pendingRes, verifiedRes] = await Promise.all([
+        api.get('/api/admin/pending-requests'),
+        api.get('/api/admin/verified-jobholders')
+      ]);
+      setPendingRequests(pendingRes.data);
+      setVerifiedUsers(verifiedRes.data);
     } catch (error) {
-      console.error('Error fetching users:', error);
+      console.error('Error fetching data:', error);
     }
   };
 
-  const fetchJobs = async () => {
+  const handleVerify = async () => {
     try {
-      const response = await api.get('/api/admin/jobs');
-      setJobs(response.data);
-    } catch (error) {
-      console.error('Error fetching jobs:', error);
-    }
-  };
-
-  const handleVerify = async (userId) => {
-    try {
-      await api.post(`/api/admin/verify/${userId}`, credentials);
-      setDialogOpen(false);
-      fetchUsers();
+      await api.post(`/api/admin/verify-jobholder/${selectedUser._id}`, credentials);
+      setCredentialsDialog(false);
+      fetchData();
     } catch (error) {
       console.error('Error verifying user:', error);
     }
   };
 
-  const handleRemoveJob = async (jobId) => {
-    if (window.confirm('Are you sure you want to remove this job?')) {
-      try {
-        await api.delete(`/api/admin/jobs/${jobId}`);
-        fetchJobs();
-      } catch (error) {
-        console.error('Error removing job:', error);
-      }
-    }
-  };
-
   const handleRemoveVerification = async (userId) => {
-    if (window.confirm('Are you sure you want to remove verification from this job holder?')) {
+    if (window.confirm('Are you sure you want to remove this verification?')) {
       try {
         await api.post(`/api/admin/remove-verification/${userId}`);
-        fetchUsers(); // Refresh the users list
+        fetchData();
       } catch (error) {
         console.error('Error removing verification:', error);
       }
@@ -93,155 +77,115 @@ const AdminDashboard = () => {
   };
 
   return (
-    <Container sx={{ py: 4 }}>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
       <Paper elevation={3} sx={{ p: 3 }}>
         <Typography variant="h4" gutterBottom>
           Admin Dashboard
         </Typography>
-        
-        <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-          <Tabs value={value} onChange={(e, newValue) => setValue(newValue)}>
-            <Tab label="Pending Verifications" />
-            <Tab label="Verified Job Holders" />
-            <Tab label="Manage Jobs" />
-          </Tabs>
-        </Box>
 
-        {/* Pending Verifications Tab */}
-        <Box role="tabpanel" hidden={value !== 0}>
-          {value === 0 && (
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Name</TableCell>
-                  <TableCell>Email</TableCell>
-                  <TableCell>Company</TableCell>
-                  <TableCell>Role</TableCell>
-                  <TableCell>Actions</TableCell>
+        <Tabs value={tabValue} onChange={(e, newValue) => setTabValue(newValue)}>
+          <Tab label="Pending Requests" />
+          <Tab label="Verified Job Holders" />
+        </Tabs>
+
+        {/* Pending Requests Tab */}
+        <TabPanel value={tabValue} index={0}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Email</TableCell>
+                <TableCell>Company</TableCell>
+                <TableCell>Role</TableCell>
+                <TableCell>Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {pendingRequests.map((request) => (
+                <TableRow key={request._id}>
+                  <TableCell>{request.email}</TableCell>
+                  <TableCell>{request.jobDetails?.companyName}</TableCell>
+                  <TableCell>{request.jobDetails?.role}</TableCell>
+                  <TableCell>
+                    <Tooltip title="View Offer Letter">
+                      <IconButton onClick={() => window.open(`/uploads/offerLetters/${request.jobDetails.offerLetter}`)}>
+                        <VisibilityIcon />
+                      </IconButton>
+                    </Tooltip>
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      startIcon={<CheckIcon />}
+                      onClick={() => {
+                        setSelectedUser(request);
+                        setCredentialsDialog(true);
+                      }}
+                    >
+                      Verify
+                    </Button>
+                  </TableCell>
                 </TableRow>
-              </TableHead>
-              <TableBody>
-                {pendingJobHolders.map((user) => (
-                  <TableRow key={user._id}>
-                    <TableCell>{user.username}</TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>{user.jobDetails?.companyName}</TableCell>
-                    <TableCell>{user.jobDetails?.role}</TableCell>
-                    <TableCell>
-                      <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={() => {
-                          setSelectedUser(user);
-                          setDialogOpen(true);
-                        }}
-                      >
-                        Verify
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </Box>
+              ))}
+            </TableBody>
+          </Table>
+        </TabPanel>
 
-        {/* Verified Job Holders Tab */}
-        <Box role="tabpanel" hidden={value !== 1}>
-          {value === 1 && (
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Name</TableCell>
-                  <TableCell>Email</TableCell>
-                  <TableCell>Company</TableCell>
-                  <TableCell>Role</TableCell>
-                  <TableCell>Actions</TableCell>
+        {/* Verified Users Tab */}
+        <TabPanel value={tabValue} index={1}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Username</TableCell>
+                <TableCell>Email</TableCell>
+                <TableCell>Company</TableCell>
+                <TableCell>Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {verifiedUsers.map((user) => (
+                <TableRow key={user._id}>
+                  <TableCell>{user.username}</TableCell>
+                  <TableCell>{user.email}</TableCell>
+                  <TableCell>{user.jobDetails?.companyName}</TableCell>
+                  <TableCell>
+                    <Button
+                      variant="outlined"
+                      color="error"
+                      startIcon={<DeleteIcon />}
+                      onClick={() => handleRemoveVerification(user._id)}
+                    >
+                      Remove Verification
+                    </Button>
+                  </TableCell>
                 </TableRow>
-              </TableHead>
-              <TableBody>
-                {verifiedJobHolders.map((user) => (
-                  <TableRow key={user._id}>
-                    <TableCell>{user.username}</TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>{user.jobDetails?.companyName}</TableCell>
-                    <TableCell>{user.jobDetails?.role}</TableCell>
-                    <TableCell>
-                      <Button
-                        variant="contained"
-                        color="error"
-                        onClick={() => handleRemoveVerification(user._id)}
-                      >
-                        Remove Verification
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </Box>
+              ))}
+            </TableBody>
+          </Table>
+        </TabPanel>
 
-        {/* Manage Jobs Tab */}
-        <Box role="tabpanel" hidden={value !== 2}>
-          {value === 2 && (
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Company</TableCell>
-                  <TableCell>Role</TableCell>
-                  <TableCell>Posted By</TableCell>
-                  <TableCell>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {jobs.map((job) => (
-                  <TableRow key={job._id}>
-                    <TableCell>{job.companyName}</TableCell>
-                    <TableCell>{job.role}</TableCell>
-                    <TableCell>{job.postedBy.email}</TableCell>
-                    <TableCell>
-                      <Button
-                        variant="contained"
-                        color="error"
-                        onClick={() => handleRemoveJob(job._id)}
-                      >
-                        Remove
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </Box>
-
-        {/* Verification Dialog */}
-        <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)}>
-          <DialogTitle>Verify Job Holder</DialogTitle>
+        {/* Credentials Dialog */}
+        <Dialog open={credentialsDialog} onClose={() => setCredentialsDialog(false)}>
+          <DialogTitle>Set Job Holder Credentials</DialogTitle>
           <DialogContent>
             <TextField
               fullWidth
-              label="Set Username"
+              label="Username"
               value={credentials.username}
-              onChange={(e) => setCredentials({...credentials, username: e.target.value})}
-              sx={{ mb: 2, mt: 2 }}
+              onChange={(e) => setCredentials({ ...credentials, username: e.target.value })}
+              margin="normal"
             />
             <TextField
               fullWidth
-              label="Set Password"
+              label="Password"
               type="password"
               value={credentials.password}
-              onChange={(e) => setCredentials({...credentials, password: e.target.value})}
+              onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
+              margin="normal"
             />
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
-            <Button 
-              onClick={() => handleVerify(selectedUser._id)}
-              variant="contained"
-            >
-              Verify & Create Account
+            <Button onClick={() => setCredentialsDialog(false)}>Cancel</Button>
+            <Button onClick={handleVerify} variant="contained" color="primary">
+              Verify & Send Credentials
             </Button>
           </DialogActions>
         </Dialog>
@@ -249,5 +193,11 @@ const AdminDashboard = () => {
     </Container>
   );
 };
+
+const TabPanel = ({ children, value, index }) => (
+  <Box hidden={value !== index} sx={{ pt: 3 }}>
+    {value === index && children}
+  </Box>
+);
 
 export default AdminDashboard; 
