@@ -273,9 +273,9 @@ const Home = () => {
                         variant="outlined"
                         color="primary"
                         fullWidth
-                        onClick={() => navigate(`/jobholder/dashboard?tab=0&edit=${job._id}`)}
+                        onClick={() => navigate(`/job/${job._id}/edit`)}
                       >
-                        Edit
+                        Edit Details
                       </Button>
                       <Button
                         variant="outlined"

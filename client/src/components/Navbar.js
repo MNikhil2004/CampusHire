@@ -1,8 +1,11 @@
 import React from 'react';
-import { AppBar, Toolbar, Typography, Button, Box, Chip } from '@mui/material';
+import { AppBar, Toolbar, Typography, Button, Box, Chip, IconButton } from '@mui/material';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { styled } from '@mui/material/styles';
+import Brightness4Icon from '@mui/icons-material/Brightness4';
+import Brightness7Icon from '@mui/icons-material/Brightness7';
+import { useTheme } from '../context/ThemeContext';
 
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
   background: 'linear-gradient(135deg, #4A90E2 0%, #67B26F 100%)',
@@ -24,6 +27,7 @@ const NavButton = styled(Button)(({ theme }) => ({
 const Navbar = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const { darkMode, toggleDarkMode } = useTheme();
 
   const handleLogout = () => {
     logout();
@@ -40,6 +44,14 @@ const Navbar = () => {
         }}>
           CareerBridge
         </Typography>
+        
+        <IconButton 
+          color="inherit" 
+          onClick={toggleDarkMode}
+          sx={{ ml: 2 }}
+        >
+          {darkMode ? <Brightness7Icon /> : <Brightness4Icon />}
+        </IconButton>
         
         {user ? (
           // Logged in navigation

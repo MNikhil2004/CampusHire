@@ -73,29 +73,27 @@ router.post('/', auth, upload.single('companyImage'), async (req, res) => {
 });
 
 // Update job (only owner can update)
-router.put('/:id', auth, upload.single('companyImage'), async (req, res) => {
+router.put('/:id', auth, async (req, res) => {
   try {
-    const job = await Job.findOne({ 
-      _id: req.params.id,
-      postedBy: req.user.userId // Ensure user owns this job
-    });
-
+    const job = await Job.findById(req.params.id);
+    
     if (!job) {
-      return res.status(404).json({ message: 'Job not found or unauthorized' });
+      return res.status(404).json({ message: 'Job not found' });
     }
 
-    const updatedJob = await Job.findByIdAndUpdate(
-      req.params.id,
-      {
-        ...req.body,
-        companyImage: req.file ? req.file.path : job.companyImage
-      },
-      { new: true }
-    );
+    // Only allow editing if the user owns the job
+    if (job.postedBy.toString() !== req.user.userId) {
+      return res.status(403).json({ message: 'Not authorized to edit this job' });
+    }
 
-    res.json(updatedJob);
+    // Only update the description
+    job.description = req.body.description;
+    await job.save();
+
+    res.json(job);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    console.error('Error updating job:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 });
 

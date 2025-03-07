@@ -19,6 +19,7 @@ import api from '../utils/axios';
 import { useAuth } from '../context/AuthContext';
 import { PageContainer, ContentPaper } from '../styles/backgroundStyles';
 import { styled } from '@mui/material/styles';
+import UploadIcon from '@mui/icons-material/Upload';
 
 const InsightsCard = styled(Card)(({ theme }) => ({
   height: '100%',
@@ -59,6 +60,7 @@ const JobHolderDashboard = () => {
   const [jobs, setJobs] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [editingJob, setEditingJob] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
 
   // Fetch user's jobs when component mounts
   useEffect(() => {
@@ -202,6 +204,19 @@ const JobHolderDashboard = () => {
     setJobForm({ ...jobForm, [name]: value });
   };
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setJobForm({...jobForm, companyImage: file});
+      // Create preview URL
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   return (
     <PageContainer>
       <Container sx={{ py: 4 }}>
@@ -280,11 +295,51 @@ const JobHolderDashboard = () => {
                     />
                   </Grid>
                   <Grid item xs={12}>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => setJobForm({...jobForm, companyImage: e.target.files[0]})}
-                    />
+                    <Box sx={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: 2,
+                      mb: 2 
+                    }}>
+                      <Button
+                        variant="outlined"
+                        component="label"
+                        startIcon={<UploadIcon />}
+                      >
+                        Choose File
+                        <input
+                          type="file"
+                          hidden
+                          accept="image/*"
+                          onChange={handleImageChange}
+                        />
+                      </Button>
+                      {imagePreview && (
+                        <Box sx={{ 
+                          width: 100, 
+                          height: 100, 
+                          border: '1px solid #ddd',
+                          borderRadius: 1,
+                          overflow: 'hidden',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}>
+                          <img 
+                            src={imagePreview} 
+                            alt="Company logo preview" 
+                            style={{ 
+                              maxWidth: '100%', 
+                              maxHeight: '100%',
+                              objectFit: 'contain'
+                            }} 
+                          />
+                        </Box>
+                      )}
+                    </Box>
+                    <Typography variant="caption" color="text.secondary">
+                      Supported formats: PNG, JPG, JPEG. Max size: 5MB
+                    </Typography>
                   </Grid>
                   <Grid item xs={12}>
                     <Button 

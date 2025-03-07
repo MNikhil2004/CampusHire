@@ -31,4 +31,26 @@ router.post('/', auth, async (req, res) => {
   }
 });
 
+// Delete question
+router.delete('/:id', auth, async (req, res) => {
+  try {
+    const question = await Question.findById(req.params.id);
+    
+    if (!question) {
+      return res.status(404).json({ message: 'Question not found' });
+    }
+
+    // Check if user owns this question or the job
+    if (question.postedBy.toString() !== req.user.userId) {
+      return res.status(403).json({ message: 'Not authorized to delete this question' });
+    }
+
+    await Question.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Question deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting question:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 module.exports = router; 

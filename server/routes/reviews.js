@@ -31,4 +31,26 @@ router.post('/', auth, async (req, res) => {
   }
 });
 
+// Delete review
+router.delete('/:id', auth, async (req, res) => {
+  try {
+    const review = await Review.findById(req.params.id);
+    
+    if (!review) {
+      return res.status(404).json({ message: 'Review not found' });
+    }
+
+    // Check if user owns this review or the job
+    if (review.postedBy.toString() !== req.user.userId) {
+      return res.status(403).json({ message: 'Not authorized to delete this review' });
+    }
+
+    await Review.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Review deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting review:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 module.exports = router; 
