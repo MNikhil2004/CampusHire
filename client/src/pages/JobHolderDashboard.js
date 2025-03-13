@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   Container,
   Paper,
@@ -61,7 +62,7 @@ const JobHolderDashboard = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [editingJob, setEditingJob] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
-
+  const navigate = useNavigate();
   // Fetch user's jobs when component mounts
   useEffect(() => {
     const fetchJobs = async () => {
@@ -80,6 +81,7 @@ const JobHolderDashboard = () => {
   }, []);
 
   const handleTabChange = (event, newValue) => {
+   
     setValue(newValue);
   };
 
@@ -104,6 +106,7 @@ const JobHolderDashboard = () => {
         yearOfJoining: ''
       });
       alert('Job posted successfully!');
+      navigate('/');
     } catch (error) {
       console.error('Error posting job:', error);
       alert('Error posting job');
@@ -351,6 +354,9 @@ const JobHolderDashboard = () => {
                     </Button>
                   </Grid>
                 </Grid>
+                <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 3 }}>
+           
+          </Box>
               </form>
             )}
           </Box>
@@ -415,6 +421,14 @@ const JobHolderDashboard = () => {
                     </Button>
                   </Grid>
                 </Grid>
+                <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: -5 }}>
+                <Button    
+                  variant="outlined" 
+                  onClick={() => navigate('/')}
+                >
+                  Back to Home
+                </Button>
+          </Box>
               </form>
             )}
           </Box>
@@ -485,6 +499,14 @@ const JobHolderDashboard = () => {
                     </Button>
                   </Grid>
                 </Grid>
+                <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: -5 }}>
+            <Button 
+              variant="outlined" 
+              onClick={() => navigate('/')}
+            >
+              Back to Home
+            </Button>
+          </Box>
               </form>
             )}
           </Box>

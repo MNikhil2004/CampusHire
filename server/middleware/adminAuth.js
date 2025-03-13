@@ -4,14 +4,14 @@ module.exports = (req, res, next) => {
   try {
     const token = req.header('Authorization').replace('Bearer ', '');
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
+
     if (decoded.role !== 'admin') {
-      throw new Error();
+      return res.status(403).json({ message: 'Admin access required' });
     }
-    
+
     req.user = decoded;
     next();
   } catch (error) {
-    res.status(401).json({ message: 'Admin authentication required' });
+    res.status(401).json({ message: 'Invalid token' });
   }
-}; 
+};

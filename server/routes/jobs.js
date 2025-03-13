@@ -24,6 +24,7 @@ router.get('/college/:college', async (req, res) => {
     const jobs = await Job.find({ college: req.params.college })
       .populate('postedBy', 'email')
       .sort({ createdAt: -1 });
+    console.log("Jobs Fetched: ", JSON.stringify(jobs, null, 2)); 
     res.json(jobs);
   } catch (error) {
     res.status(500).json({ message: error.message });

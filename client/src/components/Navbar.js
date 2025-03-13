@@ -15,19 +15,11 @@ const StyledAppBar = styled(AppBar)(({ theme }) => ({
   }
 }));
 
-const NavButton = styled(Button)(({ theme }) => ({
-  color: 'white',
-  borderRadius: 20,
-  padding: theme.spacing(1, 2),
-  '&:hover': {
-    backgroundColor: 'rgba(255,255,255,0.1)'
-  }
-}));
+
 
 const Navbar = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const { darkMode, toggleDarkMode } = useTheme();
 
   const handleLogout = () => {
     logout();
@@ -42,16 +34,10 @@ const Navbar = () => {
           textDecoration: 'none', 
           color: 'inherit' 
         }}>
-          CareerBridge
+          CareerInsight
         </Typography>
         
-        <IconButton 
-          color="inherit" 
-          onClick={toggleDarkMode}
-          sx={{ ml: 2 }}
-        >
-          {darkMode ? <Brightness7Icon /> : <Brightness4Icon />}
-        </IconButton>
+        
         
         {user ? (
           // Logged in navigation
@@ -66,7 +52,6 @@ const Navbar = () => {
                 component={Link} 
                 to="/jobholder/dashboard"
               >
-                Dashboard
               </Button>
             ) : null}
             

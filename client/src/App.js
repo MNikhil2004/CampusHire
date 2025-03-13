@@ -14,6 +14,7 @@ import { AuthProvider } from './context/AuthContext';
 import PrivateRoute from './components/PrivateRoute';
 import ErrorBoundary from './components/ErrorBoundary';
 import { useTheme } from './context/ThemeContext';
+import AdminDashboard from './pages/AdminDashboard';
 
 function App() {
   const { darkMode } = useTheme();
@@ -100,12 +101,13 @@ function App() {
             <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/admindashboard" element={<AdminDashboard />} />
               <Route path="/" element={<PrivateRoute><Home /></PrivateRoute>} />
               <Route path="/job/:id" element={<PrivateRoute><JobDetails /></PrivateRoute>} />
               <Route path="/job/:id/questions" element={<PrivateRoute><Questions /></PrivateRoute>} />
               <Route path="/job/:id/reviews" element={<PrivateRoute><Reviews /></PrivateRoute>} />
               <Route path="/jobholder/dashboard" element={<PrivateRoute><JobHolderDashboard /></PrivateRoute>} />
-              <Route path="/job/:jobId/edit" element={<EditJob />} />
+              <Route path="/job/:jobId/edit" element={<EditJob />} /> 
             </Routes>
           </BrowserRouter>
         </AuthProvider>

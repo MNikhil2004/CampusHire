@@ -6,7 +6,6 @@ const fs = require('fs');
 const path = require('path');
 const errorHandler = require('./middleware/error');
 const mongoose = require('mongoose');
-
 const app = express();
 
 // Connect to MongoDB
@@ -37,7 +36,6 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/jobs', require('./routes/jobs'));
 app.use('/api/questions', require('./routes/questions'));
 app.use('/api/reviews', require('./routes/reviews'));
-
 // Error handling
 app.use(errorHandler);
 app.use((err, req, res, next) => {
@@ -53,3 +51,5 @@ app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log('MongoDB URI:', process.env.MONGO_URI);
 }); 
+
+//this is server

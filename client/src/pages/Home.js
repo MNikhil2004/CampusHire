@@ -24,8 +24,11 @@ import { styled } from '@mui/material/styles';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import { PageContainer, ContentPaper } from '../styles/backgroundStyles';
+import '../styles/Home.css';
+import EmailIcon from '@mui/icons-material/Email';
 
 const JobCard = styled(Card)(({ theme }) => ({
+  
   height: '100%',
   display: 'flex',
   flexDirection: 'column',
@@ -37,6 +40,7 @@ const JobCard = styled(Card)(({ theme }) => ({
     boxShadow: '0 12px 24px rgba(0,0,0,0.1)'
   }
 }));
+
 
 const JobCardContent = styled(CardContent)(({ theme }) => ({
   flexGrow: 1,
@@ -52,6 +56,7 @@ const JobCardContent = styled(CardContent)(({ theme }) => ({
 }));
 
 const ActionButton = styled(Button)(({ theme }) => ({
+
   marginTop: theme.spacing(1),
   width: '100%',
   borderRadius: 8,
@@ -62,20 +67,23 @@ const ActionButton = styled(Button)(({ theme }) => ({
 }));
 
 const InsightsCard = styled(Card)(({ theme }) => ({
+  
   height: '100%',
-  backgroundColor: 'rgba(255, 255, 255, 0.9)',
+  backgroundColor: ' #f5f7fa;',
   backdropFilter: 'blur(10px)',
   transition: 'all 0.3s ease',
   '&:hover': {
     transform: 'translateY(-4px)',
-    boxShadow: '0 12px 24px rgba(0, 0, 0, 0.12)'
+    boxShadow: '0 12px 24px rgba(3, 2, 2, 0.12)'
   }
 }));
 
 const Home = () => {
   const [jobs, setJobs] = useState([]);
   const { user } = useAuth();
+  const [value, setValue] = useState(0);
   const navigate = useNavigate();
+
 
   // Search and filter states
   const [searchParams, setSearchParams] = useState({
@@ -138,7 +146,7 @@ const Home = () => {
                 Share Opportunities
               </Typography>
               <Typography>
-                Post job openings from your company
+                Post Your Job
               </Typography>
             </Box>
           </Grid>
@@ -177,7 +185,10 @@ const Home = () => {
               </Typography>
               <Button
                 variant="outlined"
-                onClick={() => navigate('/jobholder/dashboard?tab=1')}
+                onClick={() => {
+                  setValue(0);
+                  navigate('/jobholder/dashboard?tab=1');
+                }}  
               >
                 Start Contributing
               </Button>
@@ -185,22 +196,25 @@ const Home = () => {
           </Card>
         </Grid>
         <Grid item xs={12} md={6}>
-          <Card>
+           <Card>
             <CardContent>
               <Typography variant="h5" gutterBottom>
-                Post New Job Openings
+                Post Your Jobs  
               </Typography>
               <Typography variant="body1" paragraph>
                 Let others know about opportunities at your company.
               </Typography>
               <Button
                 variant="outlined"
-                onClick={() => navigate('/jobholder/dashboard?tab=0')}
+                onClick={() => {
+                  setValue(0);
+                  navigate('/jobholder/dashboard?tab=0');
+                }}  
               >
                 Post a Job
               </Button>
             </CardContent>
-          </Card>
+          </Card> 
         </Grid>
       </Grid>
 
@@ -248,7 +262,7 @@ const Home = () => {
                     </Typography>
                     <Box sx={{ mb: 2 }}>
                       <Typography variant="body2" color="text.secondary">
-                        ₹{job.salary} LPA
+                        ₹{job.salary} 
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
                         Year: {job.yearOfJoining}
@@ -297,7 +311,7 @@ const Home = () => {
   );
 
   const StudentHome = () => (
-    <Box sx={{ py: 4 }}>
+    <Box className="container" sx={{ py: 4 }}>
       <Paper elevation={3} sx={{ p: 4, mb: 4 }}>
         <Typography variant="h5" gutterBottom color="primary.main">
           Welcome to Your Job Search Journey
@@ -351,9 +365,9 @@ const Home = () => {
         <Grid container spacing={4}>
           {jobs.map((job) => (
             <Grid item xs={12} md={6} lg={4} key={job._id}>
-              <JobCard>
+              <JobCard> 
                 <JobCardContent>
-                  {job.companyImage && (
+                  {job.companyImage && (  
                     <Box 
                       component="img"
                       src={`${process.env.REACT_APP_API_URL}/${job.companyImage}`}
@@ -388,6 +402,10 @@ const Home = () => {
                       <CalendarTodayIcon fontSize="small" />
                       {job.yearOfJoining}
                     </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <EmailIcon fontSize="small" color="primary" />  {/* Email Icon */}
+                      {job.postedBy?.email ? job.postedBy.email : 'Unknown'}  {/* Display email */}
+                    </Box>
                   </Box>
                   <Box sx={{ mt: 'auto', display: 'flex', flexDirection: 'column', gap: 1 }}>
                     <ActionButton
@@ -421,7 +439,7 @@ const Home = () => {
   );
 
   const PublicHome = () => (
-    <Box sx={{ py: 8 }}>
+    <Box className="container" sx={{ py: 8 }}>
       <Container>
         <Typography variant="h3" gutterBottom sx={{ fontWeight: 600, color: 'primary.main' }}>
           Welcome to CareerBridge
