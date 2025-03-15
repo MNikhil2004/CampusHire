@@ -115,6 +115,7 @@ const Register = () => {
             onChange={handleChange}
             disabled={loading}
           />
+          <p className='text-primary'>Format for college (ex : vnrvjiet,griet)</p>
           <TextField
             margin="normal"
             required
